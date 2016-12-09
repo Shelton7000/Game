@@ -1,89 +1,235 @@
+
+/**
+* @(#)Game.java
+ *
+ *
+ * @author 
+ * @version 1.00 2015/8/29
+ */
+ import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Rectangle;
+import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 
-import java.awt.Color;
-public class Player extends GameObject{
-Handler handler;
-Roach roach =new Roach();
-volatile static BufferedImage image;
 
- BufferedImage image2;
-static public int xpos;
-static public int ypos;
-volatile static boolean picInit=false;
-Game game;
-	public Player(int x, int y, ID id, Handler handler, Game game)
+public class Game extends Canvas implements Runnable {
+  private static final long serialVersionUID =1550691097823471818L;
+  public static final int WIDTH=640, HEIGHT=WIDTH/12*9;
+  static public Thread thread;
+  
+  public Handler handler;
+  public static boolean running=false;
+  public HUD hud;
+  public Spawn spawner;  
+  volatile static public state gameState=state.menu;
+  public Menu menu;
+  public MouseInput mouseInput;
+  public static boolean replay=false;
+  public Help help;
+  public Pause pause;
+  public End end;
+   public enum state
+  {game,help,pause,end,
+	menu;
+	
+	
+	
+  };
+   public Window window;
+   BufferStrategy bs=null;
+  public Game() 
+  {
+    	
+    	
+    	if(Game.gameState==Game.state.end)
+    	 {Game.gameState=Game.gameState.game;
+    		  
+    	       Game.replay=true;
+        }
+    	
+    	thread =new Thread(this);
+    	 handler = new Handler();
+    	 
+    	 
+    	  hud= new HUD();
+	     
+    	  spawner =new Spawn(handler,hud,this);
+    	  
+    	    mouseInput=new MouseInput(handler); 
+    	      menu= new Menu(this,handler,window,  mouseInput);
+           help=new Help(this,handler,window,  mouseInput);
+        pause=new Pause(this,handler,window,  mouseInput);
+        end =new End(spawner,this,handler);
+        
+      
+     
+	   
+	     
+	     
+           this.addMouseListener(mouseInput);
+		   this.addMouseMotionListener(mouseInput);
+
+		     this.addMouseListener(end);
+		     this.addMouseListener(pause);
+		     this.addMouseListener(menu);
+		      this.addMouseListener(help);
+		      this.addKeyListener(new KeyInput(handler));
+		      handler.addObject(new Player(300,100,ID.Player,handler,this));
+          handler.addObject(new fume(313,124,ID.Fume,handler,this));
+		      window= new Window(WIDTH, HEIGHT, "Let's Build a Game!", this);
+            
+     
+
+}
+   
+
+  public  synchronized void start()
+  {
+	
+	
+    	
+    	thread.start();
+    	
+    	running=true;
+   }
+
+
+
+   public void run()
+   {
+		
+	
+	  long lastTime=System.nanoTime();
+      double amountOfTicks=60.0;
+      double ns=1000000000d / amountOfTicks;
+      double delta=0;
+      long timer= System.currentTimeMillis();
+      
+      int frames=0;
+      while(running)
+      {
+ 	   this.requestFocus();
+	   long now= System.nanoTime();
+ 	    delta +=(now-lastTime)/ns;
+ 	    lastTime=now;
+ 	
+ 	     while(delta >=1)
+ 	     {
+ 		   
+ 		   tick();
+ 		   delta--;
+ 	       
+ 	     }
+ 	
+ 	
+          if(running)
+          
+	       render();
+  	      frames++;
+          
+  	      if(System.currentTimeMillis()- timer>1000)
+  	    {
+     	  timer += 1000;
+  
+  	       frames=0;
+  	
+       	}
+     }
+    this.window.frame.dispose();
+    stop(); 
+  }
+  public synchronized  void stop()
+  { 
+	  
+	  new Game();
+	
+	
+	
+	
+  }
+  private void tick()
+  {
+	
+	if(gameState==state.game)
+	{if(gameState!=state.pause)
+	{	
+		
+	  handler.tick();
+	 
+	
+	  hud.tick();
+	 
+    spawner.tick();
+   
+     
+	}
+  }
+
+  }
+   private void render()
+   {
+	
+	 BufferStrategy bs=this.getBufferStrategy();
+	
+	
+	if(bs==null)
 	{
-		super(x,y,id);
-	if(!picInit)
-        image=roach.getImage("BoyandSpray.png");
-	   picInit=true;
-       
-        this.handler=handler;
-	   this.game=game;
-	    
+		this.createBufferStrategy(3);
+	 return;
 	}
-	
-	public void tick()
-	{
-		
-	    y=Game.clamp(y, 0, Game.HEIGHT-75);
-		
-		x=Game.clamp(x, 0, Game.WIDTH-46);
-		collision();
-		
-	}
-	public Rectangle getBounds()
-	{
-		return new Rectangle(x,y,55,55);
-		
-	}
-	
-	public Rectangle getBounds2()
-	{
-		return new Rectangle(x-294,y-129,587,387);
-		
-	}
-	
-	public void collision()
-	{
-		for(int i=0; i<handler.object.size(); i++)
-		{
-			GameObject tempObject= handler.object.get(i);
-		   if(tempObject.getID()==ID.Enemy)
-		    if(getBounds().intersects(tempObject.getBounds()))
-		     {HUD.health--;
-		    	if(HUD.health==0)
-		    		{Game.gameState=Game.gameState.end;
-		    		
-		    		 
-		    		}
-		    	}
-		}
-		
-	}
-	public void render(Graphics g)
-	{   xpos=x;
-		ypos=y;
-		g.drawImage(image, x, y,55,55, game.window);
-	    if(!fume.spr) 
-		for(int i=0;i<handler.object.size();i++)
-	     {
-	    	 if(handler.object.get(i).getID()==ID.Fume)
-	    	 {handler.object.get(i).setX(x+13);
-	    	 handler.object.get(i).setY(y+24);
-	    	 }
-	    	 
-	     }
-	
-		
-		
-		
+    Graphics g = bs.getDrawGraphics();
+
+    g.setColor(Color.black);
+    g.fillRect(0,0,WIDTH,HEIGHT);
+ 
+ 
+     if(gameState==state.game)
+     {  
+    	 handler.render(g);
+    	
+    	 hud.render(g);
+	 
+  
+  
+    }
+    else if(gameState==state.menu)
+    {  menu.render(g);
+    }
+    else if(gameState==state.help)
+    {
+	  
+	   help.render(g);
+    }
+    else if(gameState==state.pause)
+    {pause.render(g);
+	  
+    }
+    else if(gameState==state.end)
+   {  
+	  end.render(g);
+	  
+   }
+   g.dispose();
+   bs.show();
+  
+	   
+  }
+  public static int clamp(int var, int min, int max)
+  {
+	if(var>=max)
+	return max;
+	else if(var<=min)
+		return min;
+	else
+		return var;
 	
 	
 	
-	
-	}
-	
+  }
+   public static void main(String args[]) throws InterruptedException
+   {
+      new Game();
+   }
+    
 }
