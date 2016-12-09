@@ -132,7 +132,7 @@ public void finish()
 	     game.removeMouseListener(game.pause);
 	      game.removeMouseListener(game.menu);
     game.removeMouseListener(game.help);
-   game.window.frame.dispose();
+   
    Game.running=false;
 	
 }
