@@ -3,7 +3,8 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
-public class Enemy extends GameObject {
+public class Enemy extends GameObject 
+{
 	private Handler handler;
 	Roach r =new Roach();
 	BufferedImage image;
@@ -35,7 +36,11 @@ public class Enemy extends GameObject {
 		
 	}
 	public void render(Graphics g)
-	{   
+	{     if(Game.gameState==Game.state.end)
+		  {r.closeImage();
+		    return;
+		  }
+		  
 		g.drawImage(image, x, y,18,18, window);
 	
 		
