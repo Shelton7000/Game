@@ -1,4 +1,5 @@
 
+
 /**
 * @(#)Game.java
  *
@@ -25,27 +26,31 @@ public class Game extends Canvas implements Runnable {
   volatile static public state gameState=state.menu;
   public Menu menu;
   public MouseInput mouseInput;
-  
+  public static boolean replay=false;
   public Help help;
   public Pause pause;
   public End end;
-public enum state
-{game,help,pause,end,
+   public enum state
+  {game,help,pause,end,
 	menu;
 	
 	
 	
-};
-public Window window;
-
-public Game() 
-{
+  };
+   public Window window;
+   BufferStrategy bs=null;
+  public Game() 
+  {
     	
     	
     	if(Game.gameState==Game.state.end)
-    		Game.gameState=Game.gameState.game;
+    	 {Game.gameState=Game.gameState.game;
+    		  
+    	       Game.replay=true;
+        }
+    	
     	thread =new Thread(this);
-    	handler = new Handler();
+    	 handler = new Handler();
     	 
     	 
     	  hud= new HUD();
@@ -55,14 +60,13 @@ public Game()
     	    mouseInput=new MouseInput(handler); 
     	      menu= new Menu(this,handler,window,  mouseInput);
            help=new Help(this,handler,window,  mouseInput);
-      pause=new Pause(this,handler,window,  mouseInput);
-      end =new End(spawner,this,handler);
-      window= new Window(WIDTH, HEIGHT, "Let's Build a Game!", this);
-      if(gameState== state.game)	  
-      { 
+        pause=new Pause(this,handler,window,  mouseInput);
+        end =new End(spawner,this,handler);
+        
+      
+     
 	   
-	    handler.addObject(new Player(300,100,ID.Player,handler,this));
-          handler.addObject(new fume(313,124,ID.Fume,handler,this));
+	     
 	     
            this.addMouseListener(mouseInput);
 		   this.addMouseMotionListener(mouseInput);
@@ -72,145 +76,148 @@ public Game()
 		     this.addMouseListener(menu);
 		      this.addMouseListener(help);
 		      this.addKeyListener(new KeyInput(handler));
-		      
+		      handler.addObject(new Player(300,100,ID.Player,handler,this));
+          handler.addObject(new fume(313,124,ID.Fume,handler,this));
+		      window= new Window(WIDTH, HEIGHT, "Let's Build a Game!", this);
             
-      }
-      else
-      {
-      this.addMouseListener(end);
-      this.addMouseListener(pause);
-      this.addMouseListener(menu);
-      this.addMouseListener(help);
-      this.addKeyListener(new KeyInput(handler));
-      }
-   
+     
 
 }
    
 
-public  synchronized void start()
-{
+  public  synchronized void start()
+  {
 	
 	
     	
     	thread.start();
     	
-    	
-    	
     	running=true;
-    	
-    	
-    
-     
-
-}
+   }
 
 
 
-public void run()
-{
+   public void run()
+   {
+		
 	
-	
-	
-	long lastTime=System.nanoTime();
- double amountOfTicks=60.0;
- double ns=1000000000d / amountOfTicks;
- double delta=0;
- long timer= System.currentTimeMillis();
- int frames=0;
- while(running)
- {
- 	this.requestFocus();
-	long now= System.nanoTime();
- 	delta +=(now-lastTime)/ns;
- 	lastTime=now;
+	  long lastTime=System.nanoTime();
+      double amountOfTicks=60.0;
+      double ns=1000000000d / amountOfTicks;
+      double delta=0;
+      long timer= System.currentTimeMillis();
+      
+      int frames=0;
+      while(running)
+      {
+ 	   this.requestFocus();
+	   long now= System.nanoTime();
+ 	    delta +=(now-lastTime)/ns;
+ 	    lastTime=now;
  	
- 	while(delta >= 1)
- 	{
- 		
- 		tick();
- 		delta--;
- 	}
+ 	     while(delta >=1)
+ 	     {
+ 		   
+ 		   tick();
+ 		   delta--;
+ 	       
+ 	     }
  	
  	
- if(running)
- 		
-	  render();
-  	frames++;
-  	if(System.currentTimeMillis()- timer>1000)
-  	{
-     	timer += 1000;
+          if(running)
+          
+	       render();
+  	      frames++;
+          
+  	      if(System.currentTimeMillis()- timer>1000)
+  	    {
+     	  timer += 1000;
   
-  	   frames=0;
+  	       frames=0;
   	
-  	}
- }
- 
-stop(); 
-}
-public synchronized  void stop()
-{
+       	}
+     }
+    this.window.frame.dispose();
+    stop(); 
+  }
+  public synchronized  void stop()
+  { 
 	  
 	  new Game();
 	
 	
 	
 	
-}
-private void tick()
-{
+  }
+  private void tick()
+  {
 	
 	if(gameState==state.game)
 	{if(gameState!=state.pause)
-	{	handler.tick();
+	{	
+		
+	  handler.tick();
+	 
+	
 	  hud.tick();
-     spawner.tick();}
+	 
+    spawner.tick();
+   
+     
 	}
+  }
+
+  }
+   private void render()
+   {
 	
+	 BufferStrategy bs=this.getBufferStrategy();
 	
-}
-private void render(){
-	
-	BufferStrategy bs=this.getBufferStrategy();
 	
 	if(bs==null)
-	{this.createBufferStrategy(3);
+	{
+		this.createBufferStrategy(3);
 	 return;
 	}
- Graphics g = bs.getDrawGraphics();
+    Graphics g = bs.getDrawGraphics();
+
+    g.setColor(Color.black);
+    g.fillRect(0,0,WIDTH,HEIGHT);
  
-  g.setColor(Color.black);
-  g.fillRect(0,0,WIDTH,HEIGHT);
  
- 
-  if(gameState==state.game)
-  {   handler.render(g);
-	  
-	  hud.render(g);
+     if(gameState==state.game)
+     {  
+    	 handler.render(g);
+    	
+    	 hud.render(g);
+	 
   
   
-  }
-  else if(gameState==state.menu)
-  {  menu.render(g);
-  }
-  else if(gameState==state.help){
+    }
+    else if(gameState==state.menu)
+    {  menu.render(g);
+    }
+    else if(gameState==state.help)
+    {
 	  
 	   help.render(g);
-  }
-  else if(gameState==state.pause)
-  {pause.render(g);
+    }
+    else if(gameState==state.pause)
+    {pause.render(g);
 	  
-  }
-  else if(gameState==state.end)
-  {  
+    }
+    else if(gameState==state.end)
+   {  
 	  end.render(g);
 	  
+   }
+   g.dispose();
+   bs.show();
+  
+	   
   }
-  g.dispose();
-  bs.show();
-}
-public static int clamp(int var, int min, int max)
-{
+  public static int clamp(int var, int min, int max)
+  {
 	if(var>=max)
 	return max;
 	else if(var<=min)
@@ -220,10 +227,10 @@ public static int clamp(int var, int min, int max)
 	
 	
 	
-}
-    public static void main(String args[]) throws InterruptedException
-    {
+  }
+   public static void main(String args[]) throws InterruptedException
+   {
       new Game();
-    }
+   }
     
 }
